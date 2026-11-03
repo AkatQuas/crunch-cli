@@ -1,0 +1,27 @@
+[package]
+name = "crunch-cli"
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+description = "Lossy PNG compression: pngdeer, then Zopfli"
+readme = "README.md"
+
+[[bin]]
+name = "crunch"
+path = "src/main.rs"
+
+[[bin]]
+name = "crunch-bench"
+path = "src/bin/crunch-bench.rs"
+
+[dependencies]
+libc = "0.2"
+pngdeer = { path = "third_party/pngdeer", default-features = false, features = ["parallel", "oxipng"] }
+rayon = "1"
+
+[build-dependencies]
+cc = "1"
+
+# pngdeer's own patch applies only when that repository is the Cargo root.
+[patch.crates-io]
+fast-ssim2 = { path = "third_party/pngdeer/vendor/fast-ssim2" }

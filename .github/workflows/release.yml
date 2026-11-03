@@ -1,0 +1,94 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: ${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+          - os: macos-latest
+            target: aarch64-apple-darwin
+          - os: macos-latest
+            target: x86_64-apple-darwin
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+          - os: ubuntu-24.04-arm
+            target: aarch64-unknown-linux-gnu
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: C and C++ compiler
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y g++
+
+      - name: Build crunch
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "${{ matrix.target }}" = "x86_64-apple-darwin" ]; then
+            export "CC_x86_64-apple-darwin=clang"
+            export "CXX_x86_64-apple-darwin=clang++"
+            export "CFLAGS_x86_64-apple-darwin=-target x86_64-apple-macosx"
+            export "CXXFLAGS_x86_64-apple-darwin=-target x86_64-apple-macosx"
+            export CARGO_TARGET_X86_64_APPLE_DARWIN_LINKER=clang
+            export CARGO_TARGET_X86_64_APPLE_DARWIN_RUSTFLAGS="-C link-arg=-target -C link-arg=x86_64-apple-macosx"
+          fi
+          cargo build --release --bin crunch --target "${{ matrix.target }}"
+
+      - name: Package
+        shell: bash
+        run: |
+          set -euo pipefail
+          name="crunch-cli-${GITHUB_REF_NAME}-${{ matrix.target }}"
+          mkdir -p "$name"
+          bin="target/${{ matrix.target }}/release/crunch"
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            cp "${bin}.exe" "$name/crunch.exe"
+            zip -r "${name}.zip" "$name"
+          else
+            cp "$bin" "$name/crunch"
+            tar -czf "${name}.tar.gz" "$name"
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.target }}
+          path: |
+            crunch-cli-*
+          if-no-files-found: error
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Checksums
+        working-directory: dist
+        run: sha256sum crunch-cli-* > checksums.txt
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/crunch-cli-*
+            dist/checksums.txt
