@@ -16,6 +16,18 @@ Download the archive for your machine from the GitHub Release and put `crunch` o
 
 Windows archives are `.zip` and contain `crunch.exe`. The others are `.tar.gz` and contain `crunch`.
 
+### macOS may block the downloaded binary
+
+A browser download is marked with the `com.apple.quarantine` attribute. The release binary is ad-hoc signed and not notarized, so Gatekeeper can refuse to run it: macOS reports the file as damaged or malicious and only offers Move to Trash. The program itself is unchanged. Copying the archive with a tool that drops extended attributes (such as `rsync` without `--xattrs`) does not carry that mark, which is why the same archive can run on one Mac and be blocked on another.
+
+After you put `crunch` on your `PATH`, clear the attribute:
+
+```bash
+xattr -d com.apple.quarantine ~/.local/bin/crunch
+```
+
+Or open System Settings → Privacy & Security and choose Open Anyway after macOS blocks the first launch.
+
 ## Usage
 
 ```bash
