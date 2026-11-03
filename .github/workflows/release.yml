@@ -74,7 +74,8 @@ jobs:
         with:
           name: ${{ matrix.target }}
           path: |
-            crunch-cli-*
+            crunch-cli-*.tar.gz
+            crunch-cli-*.zip
           if-no-files-found: error
 
   publish:
@@ -88,7 +89,7 @@ jobs:
 
       - name: Checksums
         working-directory: dist
-        run: sha256sum crunch-cli-* > checksums.txt
+        run: sha256sum crunch-cli-*.tar.gz crunch-cli-*.zip > checksums.txt
 
       - uses: softprops/action-gh-release@v2
         with:
