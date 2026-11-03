@@ -43,12 +43,15 @@ jobs:
         run: |
           set -euo pipefail
           if [ "${{ matrix.target }}" = "x86_64-apple-darwin" ]; then
-            export "CC_x86_64-apple-darwin=clang"
-            export "CXX_x86_64-apple-darwin=clang++"
-            export "CFLAGS_x86_64-apple-darwin=-target x86_64-apple-macosx"
-            export "CXXFLAGS_x86_64-apple-darwin=-target x86_64-apple-macosx"
-            export CARGO_TARGET_X86_64_APPLE_DARWIN_LINKER=clang
-            export CARGO_TARGET_X86_64_APPLE_DARWIN_RUSTFLAGS="-C link-arg=-target -C link-arg=x86_64-apple-macosx"
+            # env(1) accepts hyphenated names. bash `export` does not.
+            exec /usr/bin/env \
+              "CC_x86_64-apple-darwin=clang" \
+              "CXX_x86_64-apple-darwin=clang++" \
+              "CFLAGS_x86_64-apple-darwin=-target x86_64-apple-macosx11.0" \
+              "CXXFLAGS_x86_64-apple-darwin=-target x86_64-apple-macosx11.0" \
+              CARGO_TARGET_X86_64_APPLE_DARWIN_LINKER=clang \
+              "CARGO_TARGET_X86_64_APPLE_DARWIN_RUSTFLAGS=-C link-arg=-target -C link-arg=x86_64-apple-macosx11.0" \
+              cargo build --release --bin crunch --target "${{ matrix.target }}"
           fi
           cargo build --release --bin crunch --target "${{ matrix.target }}"
 
@@ -61,7 +64,7 @@ jobs:
           bin="target/${{ matrix.target }}/release/crunch"
           if [ "${{ runner.os }}" = "Windows" ]; then
             cp "${bin}.exe" "$name/crunch.exe"
-            zip -r "${name}.zip" "$name"
+            powershell.exe -NoProfile -Command "Compress-Archive -Path '$name' -DestinationPath '${name}.zip'"
           else
             cp "$bin" "$name/crunch"
             tar -czf "${name}.tar.gz" "$name"
