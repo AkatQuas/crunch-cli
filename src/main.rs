@@ -3,9 +3,9 @@
 use std::path::PathBuf;
 use std::process::ExitCode;
 
-use crunch_cli::{commit, optimize_with, resolve_jobs, Job, PngdeerPalette, ZopfliPng, VERSION};
-use pngdeer::Settings;
+use crunch_cli::{commit, optimize_with, resolve_jobs, Job, SlimdeerPalette, ZopfliPng, VERSION};
 use rayon::prelude::*;
+use slimdeer::Settings;
 
 const HELP: &str = "\
 crunch {version}
@@ -75,7 +75,7 @@ fn compress_one(job: &Job, settings: &Settings) -> Result<String, String> {
     if !input.starts_with(b"\x89PNG\r\n\x1a\n") {
         return Err(format!("{} is not a PNG file", job.input.display()));
     }
-    let optimized = optimize_with(&input, settings, &PngdeerPalette, &ZopfliPng)?;
+    let optimized = optimize_with(&input, settings, &SlimdeerPalette, &ZopfliPng)?;
     let wrote = commit(&job.input, job.output.as_deref(), &optimized.output)?;
     let (path, len) = if wrote {
         let path = job.output.as_ref().unwrap_or(&job.input);

@@ -1,6 +1,6 @@
 # crunch
 
-Lossy PNG compression. Each still image is reduced to a palette by [pngdeer](https://github.com/heydeer/pngdeer), then the result is recompressed with [Zopfli](https://github.com/google/zopfli). A file is replaced only when the result is smaller. Animated PNGs stay animated and are not passed through Zopfli.
+Lossy PNG compression. Each still image is reduced to a palette by [slimdeer](https://github.com/heydeer/pngdeer), then the result is recompressed with [Zopfli](https://github.com/google/zopfli). A file is replaced only when the result is smaller. Animated PNGs stay animated and are not passed through Zopfli. The compressed file keeps the original PNG `eXIf` chunk.
 
 ## Install
 
@@ -51,10 +51,10 @@ Each finished file prints one line: percent of the original size, path, and byte
 
 ## For developers
 
-Build requirements: a stable Rust toolchain and a C/C++ compiler (`clang`, `gcc`, or MSVC). pngdeer is built with its `parallel` and `oxipng` features only. WebP, JPEG, and AVIF are not compiled.
+Build requirements: a stable Rust toolchain and a C/C++ compiler (`clang`, `gcc`, or MSVC). slimdeer is built with its `parallel` and `oxipng` features only. WebP, JPEG, and AVIF are not compiled.
 
 ```bash
-git clone --recurse-submodules https://github.com/you/crunch-cli.git
+git clone --recurse-submodules --depth 1 --shallow-submodules https://github.com/you/crunch-cli.git
 cd crunch-cli
 git config core.hooksPath .githooks
 cargo build --release
@@ -63,14 +63,14 @@ cargo build --release
 
 The repository pins two submodules:
 
-- `third_party/pngdeer` at `612bfb8` (https://github.com/heydeer/pngdeer)
+- `third_party/slimdeer` at `38ce560` (https://github.com/heydeer/pngdeer). That commit publishes the library as the `slimdeer` crate.
 - `third_party/zopfli` at `df1517d` (https://github.com/google/zopfli)
 
-`build.rs` compiles ZopfliPNG's library sources and links them into `crunch`. The Cargo root repeats pngdeer's `fast-ssim2` patch so scores match pngdeer's own binary. The submodule also contains vendored codecs that this build does not compile.
+`build.rs` compiles ZopfliPNG's library sources and links them into `crunch`. The Cargo root repeats slimdeer's `fast-ssim2` patch so scores match slimdeer's own binary. The submodule also contains vendored codecs that this build does not compile.
 
 ### Benchmark
 
-`crunch-bench` is not in the release archive. It reads PNGs from the pngdeer submodule (`third_party/pngdeer/bench/images`, about 94 files; `bench/images/ui/` is not in that repository). It prints the original size, the size and time after pngdeer, the SSIMULACRA2 score and target, then the size and time after Zopfli. Animated files show `skipped` in the Zopfli column. Inputs are not modified.
+`crunch-bench` is not in the release archive. It reads PNGs from the slimdeer submodule (`third_party/slimdeer/bench/images`, about 94 files; `bench/images/ui/` is not in that repository). It prints the original size, the size and time after slimdeer, the SSIMULACRA2 score and target, then the size and time after Zopfli. Animated files show `skipped` in the Zopfli column. Inputs are not modified.
 
 ```bash
 cargo run --release --bin crunch-bench
@@ -80,7 +80,7 @@ cargo run --release --bin crunch-bench -- --compare /path/to/old-crunch
 
 `--compare` runs the previous Crunch binary (pngquant plus the older zopflipng) on a temporary copy. Pass that binary's path. Do not point it at the `crunch` built from this repository.
 
-Continuous integration runs `crunch-bench` only on `third_party/pngdeer/bench/images/icons`, so the job stays within its time limit. Run the full tree locally.
+Continuous integration runs `crunch-bench` only on `third_party/slimdeer/bench/images/icons`, so the job stays within its time limit. Run the full tree locally.
 
 ### Checks
 
@@ -91,7 +91,7 @@ cargo fmt --check
 cargo clippy --all-targets --no-deps -- -D warnings
 ```
 
-Clippy lints this crate only. Warnings in pngdeer or oxipng are not treated as failures, and the hook does not format the submodules.
+Clippy lints this crate only. Warnings in slimdeer or oxipng are not treated as failures, and the hook does not format the submodules.
 
 GitHub Actions on push and pull request runs those two checks, `cargo test`, `cargo build --release`, and the icon benchmark. A `v*` tag builds release archives and uploads them to the GitHub Release with `checksums.txt`:
 
@@ -101,4 +101,4 @@ GitHub Actions on push and pull request runs those two checks, `cargo test`, `ca
 
 Archive names are `crunch-cli-<tag>-<target>`. A Homebrew formula can use those names and the checksum file later. This repository does not publish a tap.
 
-pngdeer is MIT licensed. Zopfli is Apache-2.0. Test images under `third_party/pngdeer/bench/images` keep the licenses listed in that directory's `SOURCES.md`.
+slimdeer is MIT licensed. Zopfli is Apache-2.0. Test images under `third_party/slimdeer/bench/images` keep the licenses listed in that directory's `SOURCES.md`.

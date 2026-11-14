@@ -118,8 +118,8 @@ version = "0.1.0"
 dependencies = [
  "cc",
  "libc",
- "pngdeer",
  "rayon",
+ "slimdeer",
 ]
 
 [[package]]
@@ -315,38 +315,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pngdeer"
-version = "0.2.1"
-dependencies = [
- "crc32fast",
- "fast-ssim2",
- "libm",
- "miniz_oxide 0.9.1",
- "oxipng",
- "png",
- "pngdeer-libaom",
- "rayon",
- "rgb",
-]
-
-[[package]]
-name = "pngdeer-clib"
-version = "0.1.0"
-dependencies = [
- "cc",
- "libm",
-]
-
-[[package]]
-name = "pngdeer-libaom"
-version = "3.15.2"
-dependencies = [
- "cc",
- "pngdeer-clib",
- "rayon",
-]
-
-[[package]]
 name = "proc-macro2"
 version = "1.0.107"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -422,6 +390,38 @@ name = "simd-adler32"
 version = "0.3.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3a219298ac11a56ea9a6d2120044824d6f01aeb034955e7af7bc16858527deea"
+
+[[package]]
+name = "slimdeer"
+version = "0.3.1"
+dependencies = [
+ "crc32fast",
+ "fast-ssim2",
+ "libm",
+ "miniz_oxide 0.9.1",
+ "oxipng",
+ "png",
+ "rayon",
+ "rgb",
+ "slimdeer-libaom",
+]
+
+[[package]]
+name = "slimdeer-clib"
+version = "0.1.0"
+dependencies = [
+ "cc",
+ "libm",
+]
+
+[[package]]
+name = "slimdeer-libaom"
+version = "3.15.2"
+dependencies = [
+ "cc",
+ "rayon",
+ "slimdeer-clib",
+]
 
 [[package]]
 name = "syn"

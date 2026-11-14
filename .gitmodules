@@ -1,5 +1,5 @@
-[submodule "third_party/pngdeer"]
-	path = third_party/pngdeer
+[submodule "third_party/slimdeer"]
+	path = third_party/slimdeer
 	url = https://github.com/heydeer/pngdeer.git
 [submodule "third_party/zopfli"]
 	path = third_party/zopfli

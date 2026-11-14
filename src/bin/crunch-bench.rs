@@ -11,7 +11,7 @@ use std::process::Command;
 use std::time::Instant;
 
 use crunch_cli::{optimize, DEFAULT_BENCH_DIR};
-use pngdeer::Settings;
+use slimdeer::Settings;
 
 fn main() {
     if let Err(err) = run() {
@@ -68,7 +68,7 @@ fn run() -> Result<(), String> {
     };
     println!(
         "{:<40} {:>8} {:>8} {:>7} {:>7} {:>8} {:>8} {:>8} {:>8}{compare_header}",
-        "file", "in", "pngdeer", "score", "target", "deer_s", "zopfli", "zop_s", "final"
+        "file", "in", "slimdeer", "score", "target", "deer_s", "zopfli", "zop_s", "final"
     );
     let mut totals = Totals::default();
     for file in &files {
