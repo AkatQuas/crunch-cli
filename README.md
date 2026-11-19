@@ -52,7 +52,7 @@ Each finished file prints one line: percent of the original size, path, and byte
 
 ## For developers
 
-Build requirements: a stable Rust toolchain and a C/C++ compiler (`clang`, `gcc`, or MSVC). slimdeer is built with `parallel`, `oxipng`, and `jpeg` (mozjpeg). WebP and AVIF are not compiled.
+Build requirements: a stable Rust toolchain and a C/C++ compiler (`clang`, `gcc`, or MSVC). slimdeer is built with `parallel`, `oxipng`, and `jpeg` (mozjpeg). WebP and AVIF are not compiled. On Windows, mozjpeg needs **LLVM's `clang-cl`** (GitHub's `windows-latest` runners include it; `.cargo/config.toml` points the MSVC target at it). Plain MSVC `cl.exe` cannot compile mozjpeg.
 
 ```bash
 git clone --recurse-submodules --depth 1 --shallow-submodules https://github.com/you/crunch-cli.git

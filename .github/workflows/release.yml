@@ -40,6 +40,9 @@ jobs:
 
       - name: Build crunch
         shell: bash
+        env:
+          CC_x86_64_pc_windows_msvc: clang-cl
+          CXX_x86_64_pc_windows_msvc: clang-cl
         run: |
           set -euo pipefail
           if [ "${{ matrix.target }}" = "x86_64-apple-darwin" ]; then
