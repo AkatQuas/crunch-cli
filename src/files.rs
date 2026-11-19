@@ -10,16 +10,23 @@ use std::fs::{self, FileTimes, OpenOptions};
 use std::path::{Path, PathBuf};
 use std::time::SystemTime;
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ImageKind {
+    Png,
+    Jpeg,
+}
+
 #[derive(Debug, PartialEq, Eq)]
 pub struct Job {
     pub input: PathBuf,
     /// `Some` writes a new file and leaves `input` untouched. `None` replaces `input`.
     pub output: Option<PathBuf>,
+    pub kind: ImageKind,
 }
 
 pub fn resolve_jobs(paths: &[PathBuf], output: Option<&Path>) -> Result<Vec<Job>, String> {
     if paths.is_empty() {
-        return Err("pass at least one PNG file or directory".into());
+        return Err("pass at least one PNG or JPEG file, or a directory".into());
     }
     let single_file = paths.len() == 1 && paths[0].is_file();
     let explicit = if single_file { output } else { None };
@@ -28,19 +35,23 @@ pub fn resolve_jobs(paths: &[PathBuf], output: Option<&Path>) -> Result<Vec<Job>
         if path.is_dir() {
             collect_dir(path, &mut jobs)?;
         } else if path.is_file() {
-            if !is_png(path) {
-                return Err(format!("{} is not a PNG file", path.display()));
-            }
+            let Some(kind) = image_kind(path) else {
+                return Err(format!(
+                    "{} is not a PNG or JPEG file (use a .png, .jpg or .jpeg extension)",
+                    path.display()
+                ));
+            };
             jobs.push(Job {
                 input: path.clone(),
                 output: explicit.map(Path::to_path_buf),
+                kind,
             });
         } else {
             return Err(format!("no such file or directory: {}", path.display()));
         }
     }
     if jobs.is_empty() {
-        return Err("no PNG files found".into());
+        return Err("no PNG or JPEG files found".into());
     }
     jobs.sort_by(|a, b| a.input.cmp(&b.input));
     Ok(jobs)
@@ -53,20 +64,34 @@ fn collect_dir(dir: &Path, jobs: &mut Vec<Job>) -> Result<(), String> {
         let path = entry.path();
         if path.is_dir() {
             collect_dir(&path, jobs)?;
-        } else if path.is_file() && is_png(&path) {
-            jobs.push(Job {
-                input: path,
-                output: None,
-            });
+        } else if path.is_file() {
+            if let Some(kind) = image_kind(&path) {
+                jobs.push(Job {
+                    input: path,
+                    output: None,
+                    kind,
+                });
+            }
         }
     }
     Ok(())
 }
 
-fn is_png(path: &Path) -> bool {
-    path.extension()
-        .and_then(|ext| ext.to_str())
-        .is_some_and(|ext| ext.eq_ignore_ascii_case("png"))
+fn image_kind(path: &Path) -> Option<ImageKind> {
+    match path.extension().and_then(|ext| ext.to_str())? {
+        ext if ext.eq_ignore_ascii_case("png") => Some(ImageKind::Png),
+        ext if ext.eq_ignore_ascii_case("jpg") || ext.eq_ignore_ascii_case("jpeg") => {
+            Some(ImageKind::Jpeg)
+        }
+        _ => None,
+    }
+}
+
+fn crunch_tmp_path(destination: &Path) -> PathBuf {
+    let name = destination
+        .file_name()
+        .expect("destination path has a file name");
+    destination.with_file_name(format!("{}.crunch-tmp", name.to_string_lossy()))
 }
 
 /// Writes `bytes` only when they are shorter than the file at `input`.
@@ -77,7 +102,7 @@ pub fn commit(input: &Path, output: Option<&Path>, bytes: &[u8]) -> Result<bool,
         return Ok(false);
     }
     let destination = output.unwrap_or(input);
-    let tmp = destination.with_extension("png.crunch-tmp");
+    let tmp = crunch_tmp_path(destination);
     fs::write(&tmp, bytes).map_err(|err| format!("{}: {err}", tmp.display()))?;
     if let Err(err) = copy_timestamps(&meta, &tmp) {
         let _ = fs::remove_file(&tmp);
@@ -182,6 +207,7 @@ mod tests {
         let one = resolve_jobs(&[dir.join("a.png")], Some(&out)).unwrap();
         assert_eq!(one.len(), 1);
         assert_eq!(one[0].output.as_deref(), Some(out.as_path()));
+        assert_eq!(one[0].kind, ImageKind::Png);
 
         let many = resolve_jobs(&[dir.join("a.png"), dir.join("b.png")], Some(&out)).unwrap();
         assert!(many.iter().all(|job| job.output.is_none()));
@@ -197,6 +223,13 @@ mod tests {
                 dir.join("nested").join("c.png"),
             ]
         );
+        touch(&dir.join("photo.jpg"), b"jpg");
+        let jpg_jobs = resolve_jobs(&[dir.join("photo.jpg")], None).unwrap();
+        assert_eq!(jpg_jobs.len(), 1);
+        assert_eq!(jpg_jobs[0].kind, ImageKind::Jpeg);
+        let mixed = resolve_jobs(std::slice::from_ref(&dir), None).unwrap();
+        assert_eq!(mixed.len(), 4);
+
         let _ = fs::remove_dir_all(&dir);
     }
 

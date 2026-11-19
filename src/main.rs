@@ -1,24 +1,30 @@
-//! `crunch`: replace PNG files in place, unless `-o` names a new file for a single input.
+//! `crunch`: replace PNG and JPEG files in place, unless `-o` names a new file for a single input.
 
 use std::path::PathBuf;
 use std::process::ExitCode;
 
-use crunch_cli::{commit, optimize_with, resolve_jobs, Job, SlimdeerPalette, ZopfliPng, VERSION};
+use crunch_cli::{
+    commit, optimize_jpeg, optimize_with, resolve_jobs, ImageKind, Job, SlimdeerPalette, ZopfliPng,
+    VERSION,
+};
 use rayon::prelude::*;
 use slimdeer::Settings;
 
 const HELP: &str = "\
 crunch {version}
 
-Lossy PNG compression. Each still image is palette-quantized, then recompressed
-with Zopfli. Animated PNGs stay animated and skip Zopfli.
+Lossy PNG and JPEG compression. Still PNGs are palette-quantized, then
+recompressed with Zopfli; animated PNGs stay animated and skip Zopfli. JPEGs are
+re-encoded in place through slimdeer only.
 
 Put the binary on PATH and run it. A result is written only when it is smaller
 than the input.
 
 Usage:
-  crunch [options] FILE.png...
+  crunch [options] FILE...
   crunch [options] DIRECTORY
+
+Each FILE, or every .png / .jpg / .jpeg under a directory, is compressed in place.
 
 Options:
   -o, --output PATH   Write one input file to PATH instead of replacing it.
@@ -72,14 +78,24 @@ fn run(args: impl Iterator<Item = String>) -> Result<(), String> {
 fn compress_one(job: &Job, settings: &Settings) -> Result<String, String> {
     let input =
         std::fs::read(&job.input).map_err(|err| format!("{}: {err}", job.input.display()))?;
-    if !input.starts_with(b"\x89PNG\r\n\x1a\n") {
-        return Err(format!("{} is not a PNG file", job.input.display()));
-    }
-    let optimized = optimize_with(&input, settings, &SlimdeerPalette, &ZopfliPng)?;
-    let wrote = commit(&job.input, job.output.as_deref(), &optimized.output)?;
+    let output = match job.kind {
+        ImageKind::Png => {
+            if !input.starts_with(b"\x89PNG\r\n\x1a\n") {
+                return Err(format!("{} is not a PNG file", job.input.display()));
+            }
+            optimize_with(&input, settings, &SlimdeerPalette, &ZopfliPng)?.output
+        }
+        ImageKind::Jpeg => {
+            if !slimdeer::jpeg::is_jpeg(&input) {
+                return Err(format!("{} is not a JPEG file", job.input.display()));
+            }
+            optimize_jpeg(&input, settings)?
+        }
+    };
+    let wrote = commit(&job.input, job.output.as_deref(), &output)?;
     let (path, len) = if wrote {
         let path = job.output.as_ref().unwrap_or(&job.input);
-        (path.display().to_string(), optimized.output.len())
+        (path.display().to_string(), output.len())
     } else {
         (job.input.display().to_string(), input.len())
     };

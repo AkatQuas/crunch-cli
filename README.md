@@ -1,6 +1,6 @@
 # crunch
 
-Lossy PNG compression. Each still image is reduced to a palette by [slimdeer](https://github.com/heydeer/pngdeer), then the result is recompressed with [Zopfli](https://github.com/google/zopfli). A file is replaced only when the result is smaller. Animated PNGs stay animated and are not passed through Zopfli. The compressed file keeps the original PNG `eXIf` chunk.
+Lossy PNG and JPEG compression. Each still PNG is reduced to a palette by [slimdeer](https://github.com/heydeer/pngdeer), then recompressed with [Zopfli](https://github.com/google/zopfli). JPEGs are re-encoded in place by slimdeer only. A file is replaced only when the result is smaller. Animated PNGs stay animated and are not passed through Zopfli. Compressed PNGs keep the original `eXIf` chunk.
 
 ## Install
 
@@ -32,13 +32,14 @@ Or open System Settings → Privacy & Security and choose Open Anyway after macO
 
 ```bash
 crunch photo.png              # replace photo.png when the result is smaller
+crunch photo.jpg              # same for JPEG
 crunch a.png b.png            # several files, in parallel
-crunch images/                # every PNG under the directory, replaced in place
+crunch images/                # every .png / .jpg / .jpeg under the directory, in place
 crunch -o small.png photo.png # write a new file; photo.png is left unchanged
 crunch --target 85 photo.png  # keep at least this SSIMULACRA2 score
 ```
 
-`-o` / `--output` applies only when you pass exactly one file. With several files, or with a directory, `crunch` replaces each PNG in place and ignores `-o`.
+`-o` / `--output` applies only when you pass exactly one file. With several files, or with a directory, `crunch` replaces each image in place and ignores `-o`.
 
 Images run together on one thread pool sized to the machine. One image can use the whole pool. Several images share it, so the process does not start one full pool per file.
 
@@ -51,7 +52,7 @@ Each finished file prints one line: percent of the original size, path, and byte
 
 ## For developers
 
-Build requirements: a stable Rust toolchain and a C/C++ compiler (`clang`, `gcc`, or MSVC). slimdeer is built with its `parallel` and `oxipng` features only. WebP, JPEG, and AVIF are not compiled.
+Build requirements: a stable Rust toolchain and a C/C++ compiler (`clang`, `gcc`, or MSVC). slimdeer is built with `parallel`, `oxipng`, and `jpeg` (mozjpeg). WebP and AVIF are not compiled.
 
 ```bash
 git clone --recurse-submodules --depth 1 --shallow-submodules https://github.com/you/crunch-cli.git

@@ -1,10 +1,13 @@
-//! Lossy PNG compression: a slimdeer palette search, then Zopfli on still images.
+//! Lossy PNG and JPEG compression: slimdeer palette search plus Zopfli on still PNGs;
+//! JPEGs are re-encoded in place through slimdeer only.
 
 mod files;
+mod jpeg;
 mod pipeline;
 mod zopfli;
 
-pub use files::{commit, resolve_jobs, Job};
+pub use files::{commit, resolve_jobs, ImageKind, Job};
+pub use jpeg::optimize_jpeg;
 pub use pipeline::{optimize, optimize_with, Optimized, Palette, SlimdeerPalette, ZopfliStage};
 pub use zopfli::ZopfliPng;
 

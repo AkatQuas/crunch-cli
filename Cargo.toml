@@ -3,7 +3,7 @@ name = "crunch-cli"
 version = "0.1.1"
 edition = "2021"
 license = "MIT OR Apache-2.0"
-description = "Lossy PNG compression: slimdeer, then Zopfli"
+description = "Lossy PNG and JPEG compression: slimdeer, then Zopfli on PNG"
 readme = "README.md"
 
 [[bin]]
@@ -16,7 +16,7 @@ path = "src/bin/crunch-bench.rs"
 
 [dependencies]
 libc = "0.2"
-slimdeer = { path = "third_party/slimdeer", default-features = false, features = ["parallel", "oxipng"] }
+slimdeer = { path = "third_party/slimdeer", default-features = false, features = ["parallel", "oxipng", "jpeg"] }
 rayon = "1"
 
 [build-dependencies]
