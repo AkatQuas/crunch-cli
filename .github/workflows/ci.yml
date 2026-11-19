@@ -33,18 +33,3 @@ jobs:
 
       - name: Benchmark icons
         run: cargo run --release --bin crunch-bench -- third_party/slimdeer/bench/images/icons
-
-  windows:
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-
-      - uses: dtolnay/rust-toolchain@stable
-
-      - name: Build (mozjpeg needs clang-cl, not MSVC cl.exe)
-        env:
-          CC_x86_64_pc_windows_msvc: clang-cl
-          CXX_x86_64_pc_windows_msvc: clang-cl
-        run: cargo build --release --bin crunch

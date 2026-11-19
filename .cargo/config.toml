@@ -1,8 +1,0 @@
-# vendored mozjpeg uses clang/gcc flags (-include, -ffp-contract=off). MSVC's cl.exe cannot
-# compile it; LLVM's clang-cl on GitHub's windows-latest runners (and a local LLVM install) can.
-[target.x86_64-pc-windows-msvc]
-linker = "clang-cl"
-
-[env]
-CC_x86_64_pc_windows_msvc = "clang-cl"
-CXX_x86_64_pc_windows_msvc = "clang-cl"

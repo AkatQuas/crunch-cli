@@ -15,8 +15,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: windows-latest
-            target: x86_64-pc-windows-msvc
           - os: macos-latest
             target: aarch64-apple-darwin
           - os: macos-latest
@@ -40,9 +38,6 @@ jobs:
 
       - name: Build crunch
         shell: bash
-        env:
-          CC_x86_64_pc_windows_msvc: clang-cl
-          CXX_x86_64_pc_windows_msvc: clang-cl
         run: |
           set -euo pipefail
           if [ "${{ matrix.target }}" = "x86_64-apple-darwin" ]; then
@@ -65,20 +60,13 @@ jobs:
           name="crunch-cli-${GITHUB_REF_NAME}-${{ matrix.target }}"
           mkdir -p "$name"
           bin="target/${{ matrix.target }}/release/crunch"
-          if [ "${{ runner.os }}" = "Windows" ]; then
-            cp "${bin}.exe" "$name/crunch.exe"
-            powershell.exe -NoProfile -Command "Compress-Archive -Path '$name' -DestinationPath '${name}.zip'"
-          else
-            cp "$bin" "$name/crunch"
-            tar -czf "${name}.tar.gz" "$name"
-          fi
+          cp "$bin" "$name/crunch"
+          tar -czf "${name}.tar.gz" "$name"
 
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.target }}
-          path: |
-            crunch-cli-*.tar.gz
-            crunch-cli-*.zip
+          path: crunch-cli-*.tar.gz
           if-no-files-found: error
 
   publish:
@@ -92,7 +80,7 @@ jobs:
 
       - name: Checksums
         working-directory: dist
-        run: sha256sum crunch-cli-*.tar.gz crunch-cli-*.zip > checksums.txt
+        run: sha256sum crunch-cli-*.tar.gz > checksums.txt
 
       - uses: softprops/action-gh-release@v2
         with:

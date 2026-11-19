@@ -8,13 +8,12 @@ Download the archive for your machine from the GitHub Release and put `crunch` o
 
 | Machine | Archive target |
 | --- | --- |
-| Windows x64 | `x86_64-pc-windows-msvc` |
 | macOS Intel | `x86_64-apple-darwin` |
 | macOS Apple silicon | `aarch64-apple-darwin` |
 | Linux x64 | `x86_64-unknown-linux-gnu` |
 | Linux arm64 | `aarch64-unknown-linux-gnu` |
 
-Windows archives are `.zip` and contain `crunch.exe`. The others are `.tar.gz` and contain `crunch`.
+Each archive is a `.tar.gz` containing `crunch`. Release builds target macOS and Linux only (same as slimdeer).
 
 ### macOS may block the downloaded binary
 
@@ -52,12 +51,12 @@ Each finished file prints one line: percent of the original size, path, and byte
 
 ## For developers
 
-Build requirements: a stable Rust toolchain and a C/C++ compiler (`clang`, `gcc`, or MSVC). slimdeer is built with `parallel`, `oxipng`, and `jpeg` (mozjpeg). WebP and AVIF are not compiled. On Windows, mozjpeg needs **LLVM's `clang-cl`** (GitHub's `windows-latest` runners include it; `.cargo/config.toml` points the MSVC target at it). Plain MSVC `cl.exe` cannot compile mozjpeg.
+Build requirements: a stable Rust toolchain and a C/C++ compiler (`clang` or `gcc`) on macOS or Linux. slimdeer is built with `parallel`, `oxipng`, and `jpeg` (mozjpeg). WebP and AVIF are not compiled.
 
 ```bash
 git clone --recurse-submodules --depth 1 --shallow-submodules https://github.com/you/crunch-cli.git
 cd crunch-cli
-git config core.hooksPath .githooks
+./scripts/setup-dev.sh   # enables .githooks/pre-commit (fmt + clippy)
 cargo build --release
 # binary: target/release/crunch
 ```
@@ -85,7 +84,7 @@ Continuous integration runs `crunch-bench` only on `third_party/slimdeer/bench/i
 
 ### Checks
 
-The pre-commit hook, after `git config core.hooksPath .githooks`, runs:
+The pre-commit hook (enable with `./scripts/setup-dev.sh`) runs:
 
 ```bash
 cargo fmt --check
@@ -96,7 +95,6 @@ Clippy lints this crate only. Warnings in slimdeer or oxipng are not treated as 
 
 GitHub Actions on push and pull request runs those two checks, `cargo test`, `cargo build --release`, and the icon benchmark. A `v*` tag builds release archives and uploads them to the GitHub Release with `checksums.txt`:
 
-- `x86_64-pc-windows-msvc`
 - `x86_64-apple-darwin` and `aarch64-apple-darwin`
 - `x86_64-unknown-linux-gnu` and `aarch64-unknown-linux-gnu`
 

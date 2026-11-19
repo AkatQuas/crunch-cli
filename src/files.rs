@@ -8,6 +8,8 @@
 
 use std::fs::{self, FileTimes, OpenOptions};
 use std::path::{Path, PathBuf};
+
+#[cfg(target_os = "macos")]
 use std::time::SystemTime;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -260,7 +262,7 @@ mod tests {
 
     #[test]
     fn commit_keeps_the_source_timestamps() {
-        use std::time::Duration;
+        use std::time::{Duration, SystemTime};
 
         let dir = std::env::temp_dir().join(format!("crunch-cli-times-{}", std::process::id()));
         let _ = fs::remove_dir_all(&dir);
